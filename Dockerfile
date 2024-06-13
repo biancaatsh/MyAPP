@@ -1,20 +1,18 @@
-# Use the official .NET Core SDK image to build the application
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
-WORKDIR /MyApp
-EXPOSE 80
+# Use the official .NET runtime as a parent image
+FROM mcr.microsoft.com/dotnet/runtime:6.0 AS base
+WORKDIR /app
 
+# Use the official .NET SDK as a parent image
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["MyApp.csproj", "./"]
 RUN dotnet restore "MyApp.csproj"
 COPY . .
-WORKDIR "/src/"
-RUN dotnet build "MyApp.csproj" -c Release -o /app/build
+WORKDIR "/src"
+RUN dotnet publish -c Release -o /app/publish
 
-FROM build AS publish
-RUN dotnet publish "MyApp.csproj" -c Release -o /app/publish
-
+# Copy the build output to the runtime image
 FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "MyApp.dll"]
